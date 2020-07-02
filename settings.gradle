@@ -1,0 +1,3 @@
+include ':betadatalibrary'
+include ':demo'
+rootProject.name = "betadata-sdk-android"

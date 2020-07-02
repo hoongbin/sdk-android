@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/betadata-sdk-android.iml" filepath="$PROJECT_DIR$/betadata-sdk-android.iml" group="betadata-sdk-android" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/betadatalibrary/betadatalibrary.iml" filepath="$PROJECT_DIR$/.idea/modules/betadatalibrary/betadatalibrary.iml" group="betadata-sdk-android/betadatalibrary" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/demo/demo.iml" filepath="$PROJECT_DIR$/.idea/modules/demo/demo.iml" group="betadata-sdk-android/demo" />
+    </modules>
+  </component>
+</project>
