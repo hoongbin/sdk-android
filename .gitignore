@@ -68,10 +68,3 @@ fastlane/readme.md
 /build
 .DS_Store
 .metadata/
-Thumbs.db
-/zoomlibrary
-/gallerypick/build
-/FlycoTabLayout_Lib/build
-zoomlibrary/
-/mp3lame/build
-/mp3lame/build/
