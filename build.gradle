@@ -3,18 +3,16 @@ buildscript {
     repositories {
         google()
         jcenter()
-        // beta数据仓库
-        maven {
-            url "betadatalibrary/repo/"
+        maven{
+            url 'https://dl.bintray.com/chenhoongbin/maven'
         }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:3.5.0"
         // beta数据
-        classpath 'com.betadata.analytics.android:betadataplugin:3.0.1'
-        classpath 'com.novoda:bintray-release:0.8.1'
+        classpath 'com.betadata.analytics.android:betadataplugin:1.0.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-
+        classpath 'com.novoda:bintray-release:0.9.1'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }

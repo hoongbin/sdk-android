@@ -2,18 +2,21 @@ apply plugin: 'com.android.library'
 
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.novoda.bintray-release'
 
-version = "1.2.2"
+version = "1.2.3"
 
 android {
-    compileSdkVersion rootProject.ext.android["compileSdkVersion"]
+    compileSdkVersion 29
+    buildToolsVersion "28.0.3"
+
 
 
     defaultConfig {
-        minSdkVersion rootProject.ext.android["minSdkVersion"]
-        targetSdkVersion rootProject.ext.android["targetSdkVersion"]
-        versionCode 3
-        versionName "1.2.2"
+        minSdkVersion 19
+        targetSdkVersion 26
+        versionCode 4
+        versionName "1.2.3"
         consumerProguardFiles 'proguard-rules.pro'
     }
     buildTypes {
@@ -31,11 +34,23 @@ android {
 dependencies {
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation  rootProject.ext.dependencies["appcompat"]
-    implementation  rootProject.ext.dependencies["gson"]
-    implementation  rootProject.ext.dependencies["gson-parent"]
-    compileOnly rootProject.ext.dependencies["xxpermissions"]
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson-parent:2.8.6'
+    compileOnly 'com.hjq:xxpermissions:6.0'
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
 
 
 }
 
+publish {
+    userOrg = 'chenhoongbin'//用户名
+    groupId = 'com.analytics.sdk'//生成的gradle依赖前缀。
+    artifactId = 'betadata'//项目名
+    publishVersion = '1.0.2' //版本号
+    desc = '数据实时采集 数据分析' //描述
+    website = 'https://github.com/hoongbin/sdk-android'
+    repository = 'https://github.com/hoongbin/sdk-android.git'
+}
