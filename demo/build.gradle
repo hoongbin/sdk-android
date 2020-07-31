@@ -24,7 +24,7 @@ android {
 
 dependencies {
     implementation project(path: ':betadatalibrary')
-
+//    implementation 'com.analytics.sdk:betadata:1.2.4'
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
