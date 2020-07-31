@@ -4,7 +4,6 @@ package com.betadata.collect.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-
 import com.betadata.collect.data.persistent.PersistentAppEndData;
 import com.betadata.collect.data.persistent.PersistentAppEndEventState;
 import com.betadata.collect.data.persistent.PersistentAppPaused;

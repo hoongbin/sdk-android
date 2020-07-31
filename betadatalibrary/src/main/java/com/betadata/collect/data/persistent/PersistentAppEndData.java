@@ -3,7 +3,6 @@ package com.betadata.collect.data.persistent;
 
 import android.content.SharedPreferences;
 
-
 import com.betadata.collect.data.DbParams;
 
 import java.util.concurrent.Future;

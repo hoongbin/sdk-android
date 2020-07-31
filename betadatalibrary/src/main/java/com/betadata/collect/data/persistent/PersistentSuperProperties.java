@@ -3,7 +3,6 @@ package com.betadata.collect.data.persistent;
 
 import android.content.SharedPreferences;
 
-
 import com.betadata.collect.BetaDataLog;
 
 import org.json.JSONException;

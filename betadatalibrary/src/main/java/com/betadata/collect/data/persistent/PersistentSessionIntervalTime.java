@@ -3,8 +3,6 @@ package com.betadata.collect.data.persistent;
 
 import android.content.SharedPreferences;
 
-
-import com.betadata.collect.BetaDataAPI;
 import com.betadata.collect.common.BetaDataConfig;
 import com.betadata.collect.data.DbParams;
 

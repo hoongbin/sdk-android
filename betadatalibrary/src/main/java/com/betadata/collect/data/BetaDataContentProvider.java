@@ -12,7 +12,6 @@ import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
-
 import com.betadata.collect.BetaDataLog;
 import com.betadata.collect.data.persistent.PersistentAppEndData;
 import com.betadata.collect.data.persistent.PersistentAppEndEventState;

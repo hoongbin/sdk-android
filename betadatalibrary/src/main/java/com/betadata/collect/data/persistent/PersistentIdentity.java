@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Build;
 
-
 import com.betadata.collect.BetaDataLog;
 
 import java.util.concurrent.ExecutionException;

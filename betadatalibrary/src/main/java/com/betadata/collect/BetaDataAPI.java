@@ -20,6 +20,7 @@ import android.webkit.WebView;
 import com.betadata.collect.common.AopConstants;
 import com.betadata.collect.common.BetaDataConfig;
 import com.betadata.collect.common.BetaDataConstant;
+import com.betadata.collect.common.SpConstant;
 import com.betadata.collect.data.DbAdapter;
 import com.betadata.collect.data.PersistentLoader;
 import com.betadata.collect.data.persistent.PersistentDistinctId;
@@ -31,6 +32,7 @@ import com.betadata.collect.data.persistent.PersistentLoginId;
 import com.betadata.collect.data.persistent.PersistentSuperProperties;
 import com.betadata.collect.exceptions.InvalidDataException;
 import com.betadata.collect.util.BetaDataUtils;
+import com.betadata.collect.util.BetaSpUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -108,7 +110,6 @@ public class BetaDataAPI implements IBetaDataAPI {
     private int mFlushBulkSize;  /* Flush数据量阈值 */
 
 
-
     /**
      * Debug 模式有三种：
      * DEBUG_OFF - 关闭DEBUG模式
@@ -118,8 +119,8 @@ public class BetaDataAPI implements IBetaDataAPI {
     public enum DebugMode {
 
 
-        DEBUG_OFF( false),// 关闭debug
-        DEBUG_OPEN( true);// 打开debug
+        DEBUG_OFF(false),// 关闭debug
+        DEBUG_OPEN(true);// 打开debug
 
         private final boolean debugMode;
 
@@ -183,10 +184,10 @@ public class BetaDataAPI implements IBetaDataAPI {
 
         synchronized (sInstanceMap) {
             final Context appContext = context.getApplicationContext();
-            BetaDataAPI instance = sInstanceMap.get( appContext );
+            BetaDataAPI instance = sInstanceMap.get(appContext);
 
             if (null == instance) {
-                BetaDataLog.i( BetaDataConstant.BT_TAG, "The static method sharedInstance(context, serverURL, debugMode) should be called before calling sharedInstance()" );
+                BetaDataLog.i(BetaDataConstant.BT_TAG, "The static method sharedInstance(context, serverURL, debugMode) should be called before calling sharedInstance()");
                 return new BetaDataAPIEmptyImplementation();
             }
             return instance;
@@ -201,7 +202,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      * @return BetaDataAPI单例
      */
     public static BetaDataAPI sharedInstance(Context context, DebugMode debugMode, String serverURL, String appid, String token) {
-        return initBetaData( context, serverURL, debugMode, appid, token );
+        return initBetaData(context, serverURL, debugMode, appid, token);
     }
 
 
@@ -222,10 +223,10 @@ public class BetaDataAPI implements IBetaDataAPI {
 
         synchronized (sInstanceMap) {
             final Context appContext = context.getApplicationContext();
-            BetaDataAPI instance = sInstanceMap.get( appContext );
+            BetaDataAPI instance = sInstanceMap.get(appContext);
             if (null == instance) {
-                instance = new BetaDataAPI( appContext, serverURL, debugMode, appid, token );
-                sInstanceMap.put( appContext, instance );
+                instance = new BetaDataAPI(appContext, serverURL, debugMode, appid, token);
+                sInstanceMap.put(appContext, instance);
             }
             return instance;
         }
@@ -260,18 +261,18 @@ public class BetaDataAPI implements IBetaDataAPI {
         mAutoTrackEventTypeList = new CopyOnWriteArraySet<>();
         try {
             // 清除本地的userAgent
-            BetaDataUtils.cleanUserAgent( mContext );
+            BetaDataUtils.cleanUserAgent(mContext);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
         Bundle configBundle = null;
         try {
-            BetaDataLog.init( this );
+            BetaDataLog.init(this);
             final ApplicationInfo appInfo = context.getApplicationContext().getPackageManager()
-                    .getApplicationInfo( packageName, PackageManager.GET_META_DATA );
+                    .getApplicationInfo(packageName, PackageManager.GET_META_DATA);
             configBundle = appInfo.metaData;
         } catch (final PackageManager.NameNotFoundException e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
 
         if (null == configBundle) {
@@ -281,57 +282,57 @@ public class BetaDataAPI implements IBetaDataAPI {
         // 如果关闭debug,ENABLE_LOG就为false
         if (debugMode == DebugMode.DEBUG_OFF) {
             // 设置是否开启 log
-            ENABLE_LOG = configBundle.getBoolean( "com.betadata.analytics.android.EnableLogging",
-                    false );
+            ENABLE_LOG = configBundle.getBoolean("com.betadata.analytics.android.EnableLogging",
+                    false);
         } else {
             // 设置是否开启 log
-            ENABLE_LOG = configBundle.getBoolean( "com.betadata.analytics.android.EnableLogging",
-                    true );
+            ENABLE_LOG = configBundle.getBoolean("com.betadata.analytics.android.EnableLogging",
+                    true);
         }
         //打开debug模式，弹出提示
 //        SHOW_DEBUG_INFO_VIEW = configBundle.getBoolean( "com.betadata.analytics.android.ShowDebugInfoView", true );
         // 设置两次数据发送的最小时间间隔
-        mFlushInterval = configBundle.getInt( "com.betadata.analytics.android.FlushInterval", BetaDataConfig.mFlushIntervalDefault );
+        mFlushInterval = configBundle.getInt("com.betadata.analytics.android.FlushInterval", BetaDataConfig.mFlushIntervalDefault);
         // 设置本地缓存日志的最大条目数
-        mFlushBulkSize = configBundle.getInt( "com.betadata.analytics.android.FlushBulkSize", BetaDataConfig.mFlushBulkSizeDefault );
+        mFlushBulkSize = configBundle.getInt("com.betadata.analytics.android.FlushBulkSize", BetaDataConfig.mFlushBulkSizeDefault);
         // 自动采集事件
-        mIsOpenAutoTrack = configBundle.getBoolean( "com.betadata.analytics.android.AutoTrack", true );
+        mIsOpenAutoTrack = configBundle.getBoolean("com.betadata.analytics.android.AutoTrack", true);
         // 进入后台是否上传数据
-        mFlushInBackground = configBundle.getBoolean( "com.betadata.analytics.android.FlushInBackground", true );
+        mFlushInBackground = configBundle.getBoolean("com.betadata.analytics.android.FlushInBackground", true);
         // 获取主进程名称
-        String mainProcessName = BetaDataUtils.getMainProcessName( context );
-        if (TextUtils.isEmpty( mainProcessName )) {
-            mMainProcessName = configBundle.getString( "com.betadata.analytics.android.MainProcessName" );
+        String mainProcessName = BetaDataUtils.getMainProcessName(context);
+        if (TextUtils.isEmpty(mainProcessName)) {
+            mMainProcessName = configBundle.getString("com.betadata.analytics.android.MainProcessName");
         } else {
             mMainProcessName = mainProcessName;
         }
         // 当前进程是否是主进程
-        mIsMainProcess = BetaDataUtils.isMainProcess( context, mMainProcessName );
+        mIsMainProcess = BetaDataUtils.isMainProcess(context, mMainProcessName);
         // 内存缓存的 数量
-        int flushCacheSize = configBundle.getInt( "com.betadata.analytics.android.FlushCacheSize", BetaDataConfig.mFlushCacheSize );
+        int flushCacheSize = configBundle.getInt("com.betadata.analytics.android.FlushCacheSize", BetaDataConfig.mFlushCacheSize);
         // 初始化数据库,并且初始化内容提供者
-        DbAdapter.getInstance( context, packageName );
+        DbAdapter.getInstance(context, packageName);
         // 初始化管理与内部数据库和传感器数据服务器之间的事件通信
-        mMessages = AnalyticsMessages.getInstance( mContext, flushCacheSize, appid, token );
+        mMessages = AnalyticsMessages.getInstance(mContext, flushCacheSize, appid, token);
         // 获取设备唯一标识
-        mAndroidId = BetaDataUtils.getAndroidID( mContext );
+        mAndroidId = BetaDataUtils.getAndroidID(mContext);
         // 初始化数据存储层
-        PersistentLoader.initLoader( context );
+        PersistentLoader.initLoader(context);
         // 操作SharedPreferences里面的对象,返回此对象在SharedPreferences的管理器。
         // 未登录时，设置用户的唯一ID 管理器
-        mDistinctId = (PersistentDistinctId) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.DISTINCT_ID );
+        mDistinctId = (PersistentDistinctId) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.DISTINCT_ID);
         // 登录时，萌股ID  管理器
-        mPersistentLoginId = (PersistentLoginId) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.LOGIN_ID );
+        mPersistentLoginId = (PersistentLoginId) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.LOGIN_ID);
         // 事件公共属性  管理器
-        mSuperProperties = (PersistentSuperProperties) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.SUPER_PROPERTIES );
+        mSuperProperties = (PersistentSuperProperties) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.SUPER_PROPERTIES);
         // 是否第一次启动  管理器
-        mFirstStart = (PersistentFirstStart) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.FIRST_START );
+        mFirstStart = (PersistentFirstStart) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.FIRST_START);
         // 用户第一次安装  管理器
-        mFirstTrackInstallation = (PersistentFirstTrackInstallation) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.FIRST_INSTALL );
+        mFirstTrackInstallation = (PersistentFirstTrackInstallation) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.FIRST_INSTALL);
         // 用户第一次跟踪安装 管理器
-        mFirstTrackInstallationWithCallback = (PersistentFirstTrackInstallationWithCallback) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.FIRST_INSTALL_CALLBACK );
+        mFirstTrackInstallationWithCallback = (PersistentFirstTrackInstallationWithCallback) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.FIRST_INSTALL_CALLBACK);
         // 第一次安装 管理器
-        mFirstDay = (PersistentFirstDay) PersistentLoader.loadPersistent( PersistentLoader.PersistentName.FIRST_DAY );
+        mFirstDay = (PersistentFirstDay) PersistentLoader.loadPersistent(PersistentLoader.PersistentName.FIRST_DAY);
         // 事件任务 集合 管理器
         mTrackTaskManager = TrackTaskManager.getInstance();
         // 事件线程池 消耗线程队列
@@ -340,14 +341,14 @@ public class BetaDataAPI implements IBetaDataAPI {
         mTrackDBTaskManagerThread = new TrackDBTaskManagerThread();
         // 启动线程队列,开启消耗事件集合.
         betaDataThreadPool = BetaDataThreadPool.getInstance();
-        betaDataThreadPool.execute( mTrackTaskManagerThread );
-        betaDataThreadPool.execute( mTrackDBTaskManagerThread );
+        betaDataThreadPool.execute(mTrackTaskManagerThread);
+        betaDataThreadPool.execute(mTrackDBTaskManagerThread);
         // 初始化Application.ActivityLifecycleCallbacks 主要监听app安装，app的start以及app的end事件。
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             final Application app = (Application) context.getApplicationContext();
             // 初始化BetaDataActivityLifecycleCallbacks 监听切换前后台状态 回调
-            final BetaDataActivityLifecycleCallbacks lifecycleCallbacks = new BetaDataActivityLifecycleCallbacks( this, mFirstStart, mFirstDay, context );
-            app.registerActivityLifecycleCallbacks( lifecycleCallbacks );
+            final BetaDataActivityLifecycleCallbacks lifecycleCallbacks = new BetaDataActivityLifecycleCallbacks(this, mFirstStart, mFirstDay, context);
+            app.registerActivityLifecycleCallbacks(lifecycleCallbacks);
         }
         // 初始化 预置基本属性
         mBaseEventInfo = initBaseEventInfo();
@@ -370,10 +371,10 @@ public class BetaDataAPI implements IBetaDataAPI {
      * AutoTrack 默认采集的事件类型
      */
     public enum AutoTrackEventType {
-        APP_START( AopConstants.BETA_APP_START, 1 << 0 ),
-        APP_END( AopConstants.BETA_APP_END, 1 << 1 ),
-        APP_CLICK( AopConstants.BETA_APP_CLICK, 1 << 2 ),
-        APP_VIEW_SCREEN( AopConstants.BETA_APP_PAGEVIEW, 1 << 3 );
+        APP_START(AopConstants.BETA_APP_START, 1 << 0),
+        APP_END(AopConstants.BETA_APP_END, 1 << 1),
+        APP_CLICK(AopConstants.BETA_APP_CLICK, 1 << 2),
+        APP_VIEW_SCREEN(AopConstants.BETA_APP_PAGEVIEW, 1 << 3);
         private final String eventName;
         private final int eventValue;
 
@@ -386,17 +387,17 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
 
         public static AutoTrackEventType autoTrackEventTypeFromEventName(String eventName) {
-            if (TextUtils.isEmpty( eventName )) {
+            if (TextUtils.isEmpty(eventName)) {
                 return null;
             }
 
-            if (AopConstants.BETA_APP_START.equals( eventName )) {
+            if (AopConstants.BETA_APP_START.equals(eventName)) {
                 return APP_START;
-            } else if (AopConstants.BETA_APP_END.equals( eventName )) {
+            } else if (AopConstants.BETA_APP_END.equals(eventName)) {
                 return APP_END;
-            } else if (AopConstants.BETA_APP_CLICK.equals( eventName )) {
+            } else if (AopConstants.BETA_APP_CLICK.equals(eventName)) {
                 return APP_CLICK;
-            } else if (AopConstants.BETA_APP_PAGEVIEW.equals( eventName )) {
+            } else if (AopConstants.BETA_APP_PAGEVIEW.equals(eventName)) {
                 return APP_VIEW_SCREEN;
             }
 
@@ -411,6 +412,7 @@ public class BetaDataAPI implements IBetaDataAPI {
 
     }
 
+    private static final String TAG = "BetaDataAPI_TAG";
 
     /**
      * 事件拼装方法
@@ -428,8 +430,8 @@ public class BetaDataAPI implements IBetaDataAPI {
         // 根据事件名称，从时长集合中,获取对应事件时长。
         if (eventName != null) {
             synchronized (mTrackTimer) {
-                eventTimer = mTrackTimer.get( eventName );
-                mTrackTimer.remove( eventName );
+                eventTimer = mTrackTimer.get(eventName);
+                mTrackTimer.remove(eventName);
             }
         } else {
             eventTimer = null;
@@ -441,62 +443,62 @@ public class BetaDataAPI implements IBetaDataAPI {
                 if (eventType.isTrack()) {
 
                     // 判断需要获取预置基本信息
-                    mBaseEventProperties = new JSONObject( mBaseEventInfo );
-                    init_carrier( mBaseEventProperties );// 初始化运营商参数
+                    mBaseEventProperties = new JSONObject(mBaseEventInfo);
+                    init_carrier(mBaseEventProperties);// 初始化运营商参数
                     // 如果某个事件的属性，在所有事件中都会出现,这个事件属性就是 mSuperProperties。
                     synchronized (mSuperProperties) {
                         JSONObject superProperties = mSuperProperties.get();
-                        BetaDataUtils.mergeJSONObject( superProperties, mBaseEventProperties );
+                        BetaDataUtils.mergeJSONObject(superProperties, mBaseEventProperties);
                     }
                     try {
                         //  设置动态公共属性
                         if (mDynamicSuperProperties != null) {
                             JSONObject dynamicSuperProperties = mDynamicSuperProperties.getDynamicSuperProperties();
                             if (dynamicSuperProperties != null) {
-                                BetaDataUtils.mergeJSONObject( dynamicSuperProperties, mBaseEventProperties );
+                                BetaDataUtils.mergeJSONObject(dynamicSuperProperties, mBaseEventProperties);
                             }
                         }
                     } catch (Exception e) {
-                        BetaDataLog.printStackTrace( e );
+                        BetaDataLog.printStackTrace(e);
                     }
                     // 当前网络状况
-                    String networkType = BetaDataUtils.networkType( mContext );
-                    mBaseEventProperties.put( AopConstants.BETA_WIFI, networkType.equals( "WIFI" ) );
-                    mBaseEventProperties.put( AopConstants.BETA_NETWORK_TYPE, networkType );
+                    String networkType = BetaDataUtils.networkType(mContext);
+                    mBaseEventProperties.put(AopConstants.BETA_WIFI, networkType.equals("WIFI"));
+                    mBaseEventProperties.put(AopConstants.BETA_NETWORK_TYPE, networkType);
 
 
                     if (mGPSLocation != null) {
                         double latitude = mGPSLocation.getLatitude();
                         double longitude = mGPSLocation.getLongitude();
-                        mBaseEventProperties.put( AopConstants.BETA_COUNTRY, mGPSLocation.getCountry() );
-                        mBaseEventProperties.put( AopConstants.BETA_PROVINCE, mGPSLocation.getProvince() );
-                        mBaseEventProperties.put( AopConstants.BETA_CITY, mGPSLocation.getCity() );
-                        mBaseEventProperties.put( AopConstants.BETA_HOUSING_ESTATE, mGPSLocation.getHousing_estate() );
+                        mBaseEventProperties.put(AopConstants.BETA_COUNTRY, mGPSLocation.getCountry());
+                        mBaseEventProperties.put(AopConstants.BETA_PROVINCE, mGPSLocation.getProvince());
+                        mBaseEventProperties.put(AopConstants.BETA_CITY, mGPSLocation.getCity());
+                        mBaseEventProperties.put(AopConstants.BETA_HOUSING_ESTATE, mGPSLocation.getHousing_estate());
                         //地图定位
                         Map<String, Double> aMapLocation = new HashMap<String, Double>();
-                        aMapLocation.put( "lat", latitude );
-                        aMapLocation.put( "lon", longitude );
-                        JSONObject mapJson = new JSONObject( aMapLocation );
-                        mBaseEventProperties.put( AopConstants.BETA_LBS, mapJson );
+                        aMapLocation.put("lat", latitude);
+                        aMapLocation.put("lon", longitude);
+                        JSONObject mapJson = new JSONObject(aMapLocation);
+                        mBaseEventProperties.put(AopConstants.BETA_LBS, mapJson);
                     }
 
                 }
                 // 设置手机唯一标识
                 setPhoneIdentification(eventProperties);
 
-                BetaDataUtils.mergeJSONObject( eventProperties, mBaseEventProperties );
+                BetaDataUtils.mergeJSONObject(eventProperties, mBaseEventProperties);
 
 
                 // 添加event_duration统计时长
                 if (null != eventTimer) {
                     try {
-                        Double duration = Double.valueOf( eventTimer.duration() );
+                        Double duration = Double.valueOf(eventTimer.duration());
                         if (duration > 0) {
-                            mBaseEventProperties.put( AopConstants.BETA_EVENT_DURATION, duration );
-                            BetaDataLog.e("BETA_EVENT_DURATION",duration+"");
+                            mBaseEventProperties.put(AopConstants.BETA_EVENT_DURATION, duration);
+                            BetaDataLog.e("BETA_EVENT_DURATION", duration + "");
                         }
                     } catch (Exception e) {
-                        BetaDataLog.printStackTrace( e );
+                        BetaDataLog.printStackTrace(e);
                     }
                 }
 
@@ -504,67 +506,73 @@ public class BetaDataAPI implements IBetaDataAPI {
 
 
                 String mLoginId = BetaDataAPI.sharedInstance().getLoginId();
-                if (mLoginId != null && !"".equals( mLoginId ) && mLoginId.length() != 16) {
-                    mBaseEventProperties.put( AopConstants.BETA_SECOND_ID, mLoginId );
+                if (mLoginId != null && !"".equals(mLoginId) && mLoginId.length() != 16) {
+                    mBaseEventProperties.put(AopConstants.BETA_SECOND_ID, mLoginId);
                     if (userProperties != null) {
-                        userProperties.put( AopConstants.BETA_SECOND_ID, mLoginId );
+                        userProperties.put(AopConstants.BETA_SECOND_ID, mLoginId);
                     }
                 }
+                long mCurrenTime = BetaDataUtils.getCurrenTimestampMillis(mContext);
+                long firstDay = (long) BetaSpUtils.get(mContext, SpConstant.INSTALL_TIME, 0L);
+                // 是否是第一天IsFirstDay
+                boolean mIsFirstDay = BetaDataUtils.isSameData(String.valueOf(firstDay), String.valueOf(mCurrenTime));
 
                 final JSONObject dataObj = new JSONObject();
-
-                dataObj.put( AopConstants.BETA_EVENT, eventName );
-                dataObj.put( AopConstants.BETA_TIME, BetaDataUtils.getCurrenTimestampMillis(mContext) );
-
-
-                boolean isEnterDb = isEnterDb( eventName, mBaseEventProperties );
+                dataObj.put(AopConstants.BETA_EVENT, eventName);
+                // 判断如果是退出事件,则设置上次退出的时间,否则为当前时间
+                if (AopConstants.BETA_APP_END.equals(eventName)) {
+                    long mAppPausedTime = DbAdapter.getInstance().getAppPausedTime();
+                    dataObj.put(AopConstants.BETA_TIME, mAppPausedTime);
+                } else {
+                    dataObj.put(AopConstants.BETA_TIME, mCurrenTime);
+                }
+                mBaseEventProperties.put(AopConstants.BETA_IS_FIRST_DAY, mIsFirstDay);
+                boolean isEnterDb = isEnterDb(eventName, mBaseEventProperties);
                 if (!isEnterDb) {
-                    BetaDataLog.d( BetaDataConstant.BT_TAG, eventName + " event can not enter database" );
+                    BetaDataLog.d(BetaDataConstant.BT_TAG, eventName + " event can not enter database");
                     return;
                 }
                 // 如果首次安装 或者 用户首次开启(用户退出登录后,mFirstStart会为true),则添加_is_fist。
-                if (AopConstants.BETA_APP_INSTALL.equals( eventName ) || (mFirstStart != null && mFirstStart.get())) {
+                if (AopConstants.BETA_APP_INSTALL.equals(eventName) || (mFirstStart != null && mFirstStart.get())) {
                     // 不能等于点击事件
-                    if (!AopConstants.BETA_APP_CLICK.equals( eventName )) {
-                        mBaseEventProperties.put( AopConstants.BETA_IS_FIRST, true );
-                        mFirstStart.commit( false );
+                    if (!AopConstants.BETA_APP_CLICK.equals(eventName)) {
+                        mBaseEventProperties.put(AopConstants.BETA_IS_FIRST, true);
+                        mFirstStart.commit(false);
                     }
-
                 }
-
-
                 if (eventType.isProfile()) {
-                    dataObj.put( AopConstants.BETA_USERS_PROPERTIES, userProperties );
-                    dataObj.put( AopConstants.BETA_EVENTS_PROPERTIES, mBaseEventProperties );
+                    dataObj.put(AopConstants.BETA_USERS_PROPERTIES, userProperties);
+                    dataObj.put(AopConstants.BETA_EVENTS_PROPERTIES, mBaseEventProperties);
                 } else {
-                    dataObj.put( AopConstants.BETA_EVENTS_PROPERTIES, mBaseEventProperties );
+                    dataObj.put(AopConstants.BETA_EVENTS_PROPERTIES, mBaseEventProperties);
                 }
 
-                BetaDataLog.e( BetaDataConstant.BT_TAG_SEND_MESSAGE, "1.追踪事件成功:" + dataObj.toString() );
-                mMessages.enqueueEventMessage( eventName, dataObj );
+                BetaDataLog.e(BetaDataConstant.BT_TAG_SEND_MESSAGE, "1.追踪事件成功:" + dataObj.toString());
+                mMessages.enqueueEventMessage(eventName, dataObj);
 
             } catch (JSONException e) {
-                throw new InvalidDataException( "Unexpected property" );
+                throw new InvalidDataException("Unexpected property");
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
     /**
      * 设置手机唯一标识
      * imei 和 oaid  和 android_id
+     *
      * @param eventProperties
      * @throws JSONException
      */
     private void setPhoneIdentification(JSONObject eventProperties) throws JSONException {
-        String imei= BetaPhoneInfoManager.getInstance().getImei();
-        String oaid= BetaPhoneInfoManager.getInstance().getOaid();
-        String android_id= BetaDataUtils.getAndroidID(mContext );
+        String imei = BetaPhoneInfoManager.getInstance().getImei();
+        String oaid = BetaPhoneInfoManager.getInstance().getOaid();
+        String android_id = BetaDataUtils.getAndroidID(mContext);
 
-        eventProperties.put( AopConstants.BETA_IMEI,imei);
-        eventProperties.put( AopConstants.BETA_OAID, oaid );
-        eventProperties.put( AopConstants.BETA_ANDROID_ID,android_id);
+        eventProperties.put(AopConstants.BETA_IMEI, imei);
+        eventProperties.put(AopConstants.BETA_OAID, oaid);
+        eventProperties.put(AopConstants.BETA_ANDROID_ID, android_id);
         // - imei
         //- oaid
         //- android
@@ -572,15 +580,14 @@ public class BetaDataAPI implements IBetaDataAPI {
         // 检查imei不等空,则位置imei
         // 检查oaid不等空,则位置oaid
         // 否则赋值Android_id
-        if(imei==null||"".equals(imei))
-        {
-            if(oaid==null||"".equals(oaid)){
-                eventProperties.put( AopConstants.BETA_DEVICE_ID,android_id );
-            }else{
-                eventProperties.put( AopConstants.BETA_DEVICE_ID,oaid );
+        if (imei == null || "".equals(imei)) {
+            if (oaid == null || "".equals(oaid)) {
+                eventProperties.put(AopConstants.BETA_DEVICE_ID, android_id);
+            } else {
+                eventProperties.put(AopConstants.BETA_DEVICE_ID, oaid);
             }
-        }else{
-            eventProperties.put( AopConstants.BETA_DEVICE_ID,imei );
+        } else {
+            eventProperties.put(AopConstants.BETA_DEVICE_ID, imei);
         }
     }
 
@@ -592,7 +599,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      * @return
      */
     protected boolean isShouldFlush(String networkType) {
-        return (BetaDataUtils.toNetworkType( networkType ) & mFlushNetworkPolicy) != 0;
+        return (BetaDataUtils.toNetworkType(networkType) & mFlushNetworkPolicy) != 0;
     }
 
     /**
@@ -600,18 +607,18 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     private Map<String, Object> initBaseEventInfo() {
         final Map<String, Object> deviceInfo = new HashMap<>();
-        deviceInfo.put( AopConstants.BETA_OS, "Android" );
-        deviceInfo.put( AopConstants.BETA_SDK, "Android" );
+        deviceInfo.put(AopConstants.BETA_OS, "Android");
+        deviceInfo.put(AopConstants.BETA_SDK, "Android");
         deviceInfo.put(AopConstants.BETA_OS_VERSION, BetaDataUtils.getPhoneOsVersion());
         deviceInfo.put(AopConstants.BETA_MODEL, BetaDataUtils.getPhoneModel());
-        deviceInfo.put( AopConstants.BETA_SDK_VERSION, AopConstants.BETADATA_SDK_VERSION );
-        deviceInfo.put( AopConstants.BETA_APP_VERSION, BetaDataUtils.getVersionName( mContext ) );
-        deviceInfo.put( AopConstants.BETA_CHANNEL, BetaDataUtils.getAppChannelName( mContext, "UMENG_CHANNEL" ) );
-        deviceInfo.put( AopConstants.BETA_CARRIER, BetaDataUtils.getOperator( mContext ) );// 运营商名称
-        deviceInfo.put( AopConstants.BETA_MANUFACTURER, BetaDataUtils.getManufacturer() );
-        deviceInfo.put( AopConstants.BETA_SCREEN_WIDTH, BetaDataUtils.deviceWidth( mContext ) );
-        deviceInfo.put( AopConstants.BETA_SCREEN_HEIGHT, BetaDataUtils.deviceHeight( mContext ) );
-        return Collections.unmodifiableMap( deviceInfo );
+        deviceInfo.put(AopConstants.BETA_SDK_VERSION, AopConstants.BETADATA_SDK_VERSION);
+        deviceInfo.put(AopConstants.BETA_APP_VERSION, BetaDataUtils.getVersionName(mContext));
+        deviceInfo.put(AopConstants.BETA_CHANNEL, BetaDataUtils.getAppChannelName(mContext, "UMENG_CHANNEL"));
+        deviceInfo.put(AopConstants.BETA_CARRIER, BetaDataUtils.getOperator(mContext));// 运营商名称
+        deviceInfo.put(AopConstants.BETA_MANUFACTURER, BetaDataUtils.getManufacturer());
+        deviceInfo.put(AopConstants.BETA_SCREEN_WIDTH, BetaDataUtils.deviceWidth(mContext));
+        deviceInfo.put(AopConstants.BETA_SCREEN_HEIGHT, BetaDataUtils.deviceHeight(mContext));
+        return Collections.unmodifiableMap(deviceInfo);
     }
 
 
@@ -625,11 +632,11 @@ public class BetaDataAPI implements IBetaDataAPI {
         JSONObject properties = new JSONObject();
         try {
             if (mBaseEventInfo != null) {
-                properties = new JSONObject( mBaseEventInfo );
+                properties = new JSONObject(mBaseEventInfo);
             }
 
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
         return properties;
     }
@@ -669,7 +676,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     public void setMaxCacheSize(long maxCacheSize) {
         if (maxCacheSize > 0) {
             //防止设置的值太小导致事件丢失
-            BetaDataConfig.mMaxCacheSize = Math.max( 16 * 1024 * 1024, maxCacheSize );
+            BetaDataConfig.mMaxCacheSize = Math.max(16 * 1024 * 1024, maxCacheSize);
         }
     }
 
@@ -711,7 +718,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void setFlushInterval(int flushInterval) {
-        mFlushInterval = Math.max( 5 * 1000, flushInterval );
+        mFlushInterval = Math.max(5 * 1000, flushInterval);
     }
 
     /**
@@ -742,7 +749,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void setFlushBulkSize(int flushBulkSize) {
-        mFlushBulkSize = Math.max( 50, flushBulkSize );
+        mFlushBulkSize = Math.max(50, flushBulkSize);
     }
 
     /**
@@ -755,16 +762,16 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void setSessionIntervalTime(int sessionIntervalTime) {
         if (DbAdapter.getInstance() == null) {
-            BetaDataLog.i( BetaDataConstant.BT_TAG, "The static method sharedInstance(context, serverURL, debugMode) should be called before calling sharedInstance()" );
+            BetaDataLog.i(BetaDataConstant.BT_TAG, "The static method sharedInstance(context, serverURL, debugMode) should be called before calling sharedInstance()");
             return;
         }
 
         if (sessionIntervalTime < 10 * 1000 || sessionIntervalTime > 5 * 60 * 1000) {
-            BetaDataLog.i( BetaDataConstant.BT_TAG, "SessionIntervalTime:" + sessionIntervalTime + " is invalid, session interval time is between 10s and 300s." );
+            BetaDataLog.i(BetaDataConstant.BT_TAG, "SessionIntervalTime:" + sessionIntervalTime + " is invalid, session interval time is between 10s and 300s.");
             return;
         }
 
-        DbAdapter.getInstance().commitSessionIntervalTime( sessionIntervalTime );
+        DbAdapter.getInstance().commitSessionIntervalTime(sessionIntervalTime);
     }
 
     /**
@@ -779,7 +786,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public int getSessionIntervalTime() {
         if (DbAdapter.getInstance() == null) {
-            BetaDataLog.i( BetaDataConstant.BT_TAG, "The static method sharedInstance(context, serverURL, debugMode) should be called before calling sharedInstance()" );
+            BetaDataLog.i(BetaDataConstant.BT_TAG, "The static method sharedInstance(context, serverURL, debugMode) should be called before calling sharedInstance()");
             return 30 * 1000;
         }
 
@@ -799,10 +806,10 @@ public class BetaDataAPI implements IBetaDataAPI {
                 mGPSLocation = new BetaDataGPSLocation();
             }
 
-            mGPSLocation.setLatitude( (long) (latitude * Math.pow( 10, 6 )) );
-            mGPSLocation.setLongitude( (long) (longitude * Math.pow( 10, 6 )) );
+            mGPSLocation.setLatitude((long) (latitude * Math.pow(10, 6)));
+            mGPSLocation.setLongitude((long) (longitude * Math.pow(10, 6)));
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -823,16 +830,16 @@ public class BetaDataAPI implements IBetaDataAPI {
                 mGPSLocation = new BetaDataGPSLocation();
             }
 
-            mGPSLocation.setLatitude( latitude );
-            mGPSLocation.setLongitude( longitude );
+            mGPSLocation.setLatitude(latitude);
+            mGPSLocation.setLongitude(longitude);
 
-            mGPSLocation.setCountry( country );
-            mGPSLocation.setProvince( province );
-            mGPSLocation.setCity( city );
-            mGPSLocation.setHousing_estate( housing_estate );
+            mGPSLocation.setCountry(country);
+            mGPSLocation.setProvince(province);
+            mGPSLocation.setCity(city);
+            mGPSLocation.setHousing_estate(housing_estate);
 
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -849,7 +856,7 @@ public class BetaDataAPI implements IBetaDataAPI {
         try {
             if (enable) {
                 if (mOrientationDetector == null) {
-                    mOrientationDetector = new BetaDataScreenOrientationDetector( mContext, SensorManager.SENSOR_DELAY_NORMAL );
+                    mOrientationDetector = new BetaDataScreenOrientationDetector(mContext, SensorManager.SENSOR_DELAY_NORMAL);
                 }
                 mOrientationDetector.enable();
             } else {
@@ -859,7 +866,7 @@ public class BetaDataAPI implements IBetaDataAPI {
                 }
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -870,7 +877,7 @@ public class BetaDataAPI implements IBetaDataAPI {
                 mOrientationDetector.enable();
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -881,7 +888,7 @@ public class BetaDataAPI implements IBetaDataAPI {
                 mOrientationDetector.disable();
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -892,7 +899,7 @@ public class BetaDataAPI implements IBetaDataAPI {
                 return mOrientationDetector.getOrientation();
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
         return null;
     }
@@ -901,12 +908,12 @@ public class BetaDataAPI implements IBetaDataAPI {
     public void setCookie(String cookie, boolean encode) {
         try {
             if (encode) {
-                this.mCookie = URLEncoder.encode( cookie, "UTF-8" );
+                this.mCookie = URLEncoder.encode(cookie, "UTF-8");
             } else {
                 this.mCookie = cookie;
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -914,12 +921,12 @@ public class BetaDataAPI implements IBetaDataAPI {
     public String getCookie(boolean decode) {
         try {
             if (decode) {
-                return URLDecoder.decode( this.mCookie, "UTF-8" );
+                return URLDecoder.decode(this.mCookie, "UTF-8");
             } else {
                 return this.mCookie;
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
             return null;
         }
 
@@ -938,10 +945,10 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void enableAutoTrack() {
         List<AutoTrackEventType> eventTypeList = new ArrayList<>();
-        eventTypeList.add( AutoTrackEventType.APP_START );
-        eventTypeList.add( AutoTrackEventType.APP_END );
-        eventTypeList.add( AutoTrackEventType.APP_VIEW_SCREEN );
-        enableAutoTrack( eventTypeList );
+        eventTypeList.add(AutoTrackEventType.APP_START);
+        eventTypeList.add(AutoTrackEventType.APP_END);
+        eventTypeList.add(AutoTrackEventType.APP_VIEW_SCREEN);
+        enableAutoTrack(eventTypeList);
     }
 
     /**
@@ -962,9 +969,9 @@ public class BetaDataAPI implements IBetaDataAPI {
                 eventTypeList = new ArrayList<>();
             }
 
-            mAutoTrackEventTypeList.addAll( eventTypeList );
+            mAutoTrackEventTypeList.addAll(eventTypeList);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -983,9 +990,9 @@ public class BetaDataAPI implements IBetaDataAPI {
             return;
         }
         try {
-            mAutoTrackEventTypeList.removeAll( eventTypeList );
+            mAutoTrackEventTypeList.removeAll(eventTypeList);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
 
         if (mAutoTrackEventTypeList.size() == 0) {
@@ -1009,11 +1016,11 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
 
         try {
-            if (mAutoTrackEventTypeList.contains( autoTrackEventType )) {
-                mAutoTrackEventTypeList.remove( autoTrackEventType );
+            if (mAutoTrackEventTypeList.contains(autoTrackEventType)) {
+                mAutoTrackEventTypeList.remove(autoTrackEventType);
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
 
         if (mAutoTrackEventTypeList.size() == 0) {
@@ -1026,7 +1033,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void trackAppCrash(Class clz) {
-        BetaDataExceptionHandler.init(mContext,clz);
+        BetaDataExceptionHandler.init(mContext, clz);
     }
 
     /**
@@ -1050,7 +1057,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     static void allInstances(InstanceProcessor processor) {
         synchronized (sInstanceMap) {
             for (final BetaDataAPI instance : sInstanceMap.values()) {
-                processor.process( instance );
+                processor.process(instance);
             }
         }
     }
@@ -1093,13 +1100,13 @@ public class BetaDataAPI implements IBetaDataAPI {
     @SuppressLint(value = {"SetJavaScriptEnabled", "addJavascriptInterface"})
     @Override
     public void showUpWebView(WebView webView, boolean isSupportJellyBean) {
-        showUpWebView( webView, isSupportJellyBean, null );
+        showUpWebView(webView, isSupportJellyBean, null);
     }
 
     @SuppressLint(value = {"SetJavaScriptEnabled", "addJavascriptInterface"})
     @Override
     public void showUpWebView(WebView webView, boolean isSupportJellyBean, boolean enableVerify) {
-        showUpWebView( webView, null, isSupportJellyBean, enableVerify );
+        showUpWebView(webView, null, isSupportJellyBean, enableVerify);
     }
 
     /**
@@ -1110,13 +1117,13 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void showUpWebView(WebView webView, JSONObject properties, boolean isSupportJellyBean, boolean enableVerify) {
         if (Build.VERSION.SDK_INT < 17 && !isSupportJellyBean) {
-            BetaDataLog.d( BetaDataConstant.BT_TAG, "For applications targeted to API level JELLY_BEAN or below, this feature NOT SUPPORTED" );
+            BetaDataLog.d(BetaDataConstant.BT_TAG, "For applications targeted to API level JELLY_BEAN or below, this feature NOT SUPPORTED");
             return;
         }
 
         if (webView != null) {
-            webView.getSettings().setJavaScriptEnabled( true );
-            webView.addJavascriptInterface( new AppWebViewInterface( mContext, properties, enableVerify ), "BetaData_APP_JS_Bridge" );
+            webView.getSettings().setJavaScriptEnabled(true);
+            webView.addJavascriptInterface(new AppWebViewInterface(mContext, properties, enableVerify), "BetaData_APP_JS_Bridge");
         }
     }
 
@@ -1131,7 +1138,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @SuppressLint(value = {"SetJavaScriptEnabled", "addJavascriptInterface"})
     @Override
     public void showUpWebView(WebView webView, boolean isSupportJellyBean, JSONObject properties) {
-        showUpWebView( webView, properties, isSupportJellyBean, false );
+        showUpWebView(webView, properties, isSupportJellyBean, false);
     }
 
     /**
@@ -1142,7 +1149,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     public void showUpX5WebView(Object x5WebView, JSONObject properties, boolean isSupportJellyBean, boolean enableVerify) {
         try {
             if (Build.VERSION.SDK_INT < 17 && !isSupportJellyBean) {
-                BetaDataLog.d( BetaDataConstant.BT_TAG, "For applications targeted to API level JELLY_BEAN or below, this feature NOT SUPPORTED" );
+                BetaDataLog.d(BetaDataConstant.BT_TAG, "For applications targeted to API level JELLY_BEAN or below, this feature NOT SUPPORTED");
                 return;
             }
 
@@ -1151,14 +1158,14 @@ public class BetaDataAPI implements IBetaDataAPI {
             }
 
             Class<?> clazz = x5WebView.getClass();
-            Method addJavascriptInterface = clazz.getMethod( "addJavascriptInterface", Object.class, String.class );
+            Method addJavascriptInterface = clazz.getMethod("addJavascriptInterface", Object.class, String.class);
             if (addJavascriptInterface == null) {
                 return;
             }
 
-            addJavascriptInterface.invoke( x5WebView, new AppWebViewInterface( mContext, properties, enableVerify ), "BetaData_APP_JS_Bridge" );
+            addJavascriptInterface.invoke(x5WebView, new AppWebViewInterface(mContext, properties, enableVerify), "BetaData_APP_JS_Bridge");
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1174,20 +1181,20 @@ public class BetaDataAPI implements IBetaDataAPI {
             }
 
             Class<?> clazz = x5WebView.getClass();
-            Method addJavascriptInterface = clazz.getMethod( "addJavascriptInterface", Object.class, String.class );
+            Method addJavascriptInterface = clazz.getMethod("addJavascriptInterface", Object.class, String.class);
             if (addJavascriptInterface == null) {
                 return;
             }
 
-            addJavascriptInterface.invoke( x5WebView, new AppWebViewInterface( mContext, null, enableVerify ), "BetaData_APP_JS_Bridge" );
+            addJavascriptInterface.invoke(x5WebView, new AppWebViewInterface(mContext, null, enableVerify), "BetaData_APP_JS_Bridge");
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
     @Override
     public void showUpX5WebView(Object x5WebView) {
-        showUpX5WebView( x5WebView, false );
+        showUpX5WebView(x5WebView, false);
     }
 
     /**
@@ -1211,8 +1218,8 @@ public class BetaDataAPI implements IBetaDataAPI {
         for (Class<?> activity : activitiesList) {
             if (activity != null) {
                 hashCode = activity.hashCode();
-                if (!mAutoTrackIgnoredActivities.contains( hashCode )) {
-                    mAutoTrackIgnoredActivities.add( hashCode );
+                if (!mAutoTrackIgnoredActivities.contains(hashCode)) {
+                    mAutoTrackIgnoredActivities.add(hashCode);
                 }
             }
         }
@@ -1238,13 +1245,13 @@ public class BetaDataAPI implements IBetaDataAPI {
             for (Class activity : activitiesList) {
                 if (activity != null) {
                     hashCode = activity.hashCode();
-                    if (mAutoTrackIgnoredActivities.contains( hashCode )) {
-                        mAutoTrackIgnoredActivities.remove( Integer.valueOf( hashCode ) );
+                    if (mAutoTrackIgnoredActivities.contains(hashCode)) {
+                        mAutoTrackIgnoredActivities.remove(Integer.valueOf(hashCode));
                     }
                 }
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1265,11 +1272,11 @@ public class BetaDataAPI implements IBetaDataAPI {
 
         try {
             int hashCode = activity.hashCode();
-            if (!mAutoTrackIgnoredActivities.contains( hashCode )) {
-                mAutoTrackIgnoredActivities.add( hashCode );
+            if (!mAutoTrackIgnoredActivities.contains(hashCode)) {
+                mAutoTrackIgnoredActivities.add(hashCode);
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1290,11 +1297,11 @@ public class BetaDataAPI implements IBetaDataAPI {
 
         try {
             int hashCode = activity.hashCode();
-            if (mAutoTrackIgnoredActivities.contains( hashCode )) {
-                mAutoTrackIgnoredActivities.remove( Integer.valueOf( hashCode ) );
+            if (mAutoTrackIgnoredActivities.contains(hashCode)) {
+                mAutoTrackIgnoredActivities.remove(Integer.valueOf(hashCode));
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1314,10 +1321,10 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
 
         try {
-            mAutoTrackFragments.add( fragment.hashCode() );
-            mAutoTrackFragments.add( fragment.getCanonicalName().hashCode() );
+            mAutoTrackFragments.add(fragment.hashCode());
+            mAutoTrackFragments.add(fragment.getCanonicalName().hashCode());
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1338,11 +1345,11 @@ public class BetaDataAPI implements IBetaDataAPI {
 
         try {
             for (Class fragment : fragmentsList) {
-                mAutoTrackFragments.add( fragment.hashCode() );
-                mAutoTrackFragments.add( fragment.getCanonicalName().hashCode() );
+                mAutoTrackFragments.add(fragment.hashCode());
+                mAutoTrackFragments.add(fragment.getCanonicalName().hashCode());
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1353,7 +1360,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void enableAutoTrackFragment(String fragmentName) {
-        if (TextUtils.isEmpty( fragmentName )) {
+        if (TextUtils.isEmpty(fragmentName)) {
             return;
         }
 
@@ -1362,9 +1369,9 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
 
         try {
-            mAutoTrackFragments.add( fragmentName.hashCode() );
+            mAutoTrackFragments.add(fragmentName.hashCode());
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1381,15 +1388,15 @@ public class BetaDataAPI implements IBetaDataAPI {
             return false;
         }
         if (mAutoTrackIgnoredActivities != null &&
-                mAutoTrackIgnoredActivities.contains( activity.hashCode() )) {
+                mAutoTrackIgnoredActivities.contains(activity.hashCode())) {
             return true;
         }
 
-        if (activity.getAnnotation( BetaDataIgnoreTrackAppViewScreenAndAppClick.class ) != null) {
+        if (activity.getAnnotation(BetaDataIgnoreTrackAppViewScreenAndAppClick.class) != null) {
             return true;
         }
 
-        if (activity.getAnnotation( BetaDataIgnoreTrackAppViewScreen.class ) != null) {
+        if (activity.getAnnotation(BetaDataIgnoreTrackAppViewScreen.class) != null) {
             return true;
         }
 
@@ -1409,19 +1416,19 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
         try {
             if (mAutoTrackFragments != null && mAutoTrackFragments.size() > 0) {
-                if (mAutoTrackFragments.contains( fragment.hashCode() )
-                        || mAutoTrackFragments.contains( fragment.getCanonicalName().hashCode() )) {
+                if (mAutoTrackFragments.contains(fragment.hashCode())
+                        || mAutoTrackFragments.contains(fragment.getCanonicalName().hashCode())) {
                     return true;
                 } else {
                     return false;
                 }
             }
 
-            if (fragment.getClass().getAnnotation( BetaDataIgnoreTrackAppViewScreen.class ) != null) {
+            if (fragment.getClass().getAnnotation(BetaDataIgnoreTrackAppViewScreen.class) != null) {
                 return false;
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
 
         return true;
@@ -1440,15 +1447,15 @@ public class BetaDataAPI implements IBetaDataAPI {
             return false;
         }
         if (mAutoTrackIgnoredActivities != null &&
-                mAutoTrackIgnoredActivities.contains( activity.hashCode() )) {
+                mAutoTrackIgnoredActivities.contains(activity.hashCode())) {
             return true;
         }
 
-        if (activity.getAnnotation( BetaDataIgnoreTrackAppViewScreenAndAppClick.class ) != null) {
+        if (activity.getAnnotation(BetaDataIgnoreTrackAppViewScreenAndAppClick.class) != null) {
             return true;
         }
 
-        if (activity.getAnnotation( BetaDataIgnoreTrackAppClick.class ) != null) {
+        if (activity.getAnnotation(BetaDataIgnoreTrackAppClick.class) != null) {
             return true;
         }
 
@@ -1469,8 +1476,8 @@ public class BetaDataAPI implements IBetaDataAPI {
             return;
         }
 
-        if (mAutoTrackEventTypeList.contains( autoTrackEventType )) {
-            mAutoTrackEventTypeList.remove( autoTrackEventType );
+        if (mAutoTrackEventTypeList.contains(autoTrackEventType)) {
+            mAutoTrackEventTypeList.remove(autoTrackEventType);
         }
     }
 
@@ -1487,8 +1494,8 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
 
         for (AutoTrackEventType eventType : eventTypeList) {
-            if (eventType != null && mAutoTrackEventTypeList.contains( eventType )) {
-                mAutoTrackEventTypeList.remove( eventType );
+            if (eventType != null && mAutoTrackEventTypeList.contains(eventType)) {
+                mAutoTrackEventTypeList.remove(eventType);
             }
         }
     }
@@ -1502,7 +1509,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public boolean isAutoTrackEventTypeIgnored(AutoTrackEventType eventType) {
 
-        if (eventType != null && !mAutoTrackEventTypeList.contains( eventType )) {
+        if (eventType != null && !mAutoTrackEventTypeList.contains(eventType)) {
             return true;
         }
         return false;
@@ -1516,8 +1523,8 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void setViewID(View view, String viewID) {
-        if (view != null && !TextUtils.isEmpty( viewID )) {
-            view.setTag( R.id.beta_analytics_tag_view_id, viewID );
+        if (view != null && !TextUtils.isEmpty(viewID)) {
+            view.setTag(R.id.beta_analytics_tag_view_id, viewID);
         }
     }
 
@@ -1530,13 +1537,13 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void setViewID(android.app.Dialog view, String viewID) {
         try {
-            if (view != null && !TextUtils.isEmpty( viewID )) {
+            if (view != null && !TextUtils.isEmpty(viewID)) {
                 if (view.getWindow() != null) {
-                    view.getWindow().getDecorView().setTag( R.id.beta_analytics_tag_view_id, viewID );
+                    view.getWindow().getDecorView().setTag(R.id.beta_analytics_tag_view_id, viewID);
                 }
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1558,13 +1565,13 @@ public class BetaDataAPI implements IBetaDataAPI {
             Class<?> androidXAlertDialogClass = null;
             Class<?> currentAlertDialogClass = null;
             try {
-                supportAlertDialogClass = Class.forName( "android.support.v7.app.AlertDialog" );
+                supportAlertDialogClass = Class.forName("android.support.v7.app.AlertDialog");
             } catch (Exception e) {
                 //ignored
             }
 
             try {
-                androidXAlertDialogClass = Class.forName( "androidx.appcompat.app.AlertDialog" );
+                androidXAlertDialogClass = Class.forName("androidx.appcompat.app.AlertDialog");
             } catch (Exception e) {
                 //ignored
             }
@@ -1579,23 +1586,23 @@ public class BetaDataAPI implements IBetaDataAPI {
                 return;
             }
 
-            if (!currentAlertDialogClass.isInstance( alertDialog )) {
+            if (!currentAlertDialogClass.isInstance(alertDialog)) {
                 return;
             }
 
-            if (!TextUtils.isEmpty( viewID )) {
-                Method getWindowMethod = alertDialog.getClass().getMethod( "getWindow" );
+            if (!TextUtils.isEmpty(viewID)) {
+                Method getWindowMethod = alertDialog.getClass().getMethod("getWindow");
                 if (getWindowMethod == null) {
                     return;
                 }
 
-                Window window = (Window) getWindowMethod.invoke( alertDialog );
+                Window window = (Window) getWindowMethod.invoke(alertDialog);
                 if (window != null) {
-                    window.getDecorView().setTag( R.id.beta_analytics_tag_view_id, viewID );
+                    window.getDecorView().setTag(R.id.beta_analytics_tag_view_id, viewID);
                 }
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1611,9 +1618,9 @@ public class BetaDataAPI implements IBetaDataAPI {
             if (view == null || activity == null) {
                 return;
             }
-            view.setTag( R.id.beta_analytics_tag_view_activity, activity );
+            view.setTag(R.id.beta_analytics_tag_view_activity, activity);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1626,12 +1633,12 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void setViewFragmentName(View view, String fragmentName) {
         try {
-            if (view == null || TextUtils.isEmpty( fragmentName )) {
+            if (view == null || TextUtils.isEmpty(fragmentName)) {
                 return;
             }
-            view.setTag( R.id.beta_analytics_tag_view_fragment_name2, fragmentName );
+            view.setTag(R.id.beta_analytics_tag_view_fragment_name2, fragmentName);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -1643,14 +1650,14 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void ignoreView(View view) {
         if (view != null) {
-            view.setTag( R.id.beta_analytics_tag_view_ignored, "1" );
+            view.setTag(R.id.beta_analytics_tag_view_ignored, "1");
         }
     }
 
     @Override
     public void ignoreView(View view, boolean ignore) {
         if (view != null) {
-            view.setTag( R.id.beta_analytics_tag_view_ignored, ignore ? "1" : "0" );
+            view.setTag(R.id.beta_analytics_tag_view_ignored, ignore ? "1" : "0");
         }
     }
 
@@ -1666,7 +1673,7 @@ public class BetaDataAPI implements IBetaDataAPI {
             return;
         }
 
-        view.setTag( R.id.beta_analytics_tag_view_properties, properties );
+        view.setTag(R.id.beta_analytics_tag_view_properties, properties);
     }
 
     private List<Class> mIgnoredViewTypeList = new ArrayList<>();
@@ -1705,8 +1712,8 @@ public class BetaDataAPI implements IBetaDataAPI {
             mIgnoredViewTypeList = new ArrayList<>();
         }
 
-        if (!mIgnoredViewTypeList.contains( viewType )) {
-            mIgnoredViewTypeList.add( viewType );
+        if (!mIgnoredViewTypeList.contains(viewType)) {
+            mIgnoredViewTypeList.add(viewType);
         }
     }
 
@@ -1750,11 +1757,11 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void resetAnonymousId() {
         synchronized (mDistinctId) {
-            if (BetaDataUtils.isValidAndroidId( mAndroidId )) {
-                mDistinctId.commit( mAndroidId );
+            if (BetaDataUtils.isValidAndroidId(mAndroidId)) {
+                mDistinctId.commit(mAndroidId);
                 return;
             }
-            mDistinctId.commit( UUID.randomUUID().toString() );
+            mDistinctId.commit(UUID.randomUUID().toString());
         }
     }
 
@@ -1779,7 +1786,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     public String getCurrentDistinctId() {
         String mLoginId = getLoginId();
-        if (!TextUtils.isEmpty( mLoginId )) {
+        if (!TextUtils.isEmpty(mLoginId)) {
             return mLoginId;
         } else {
             return null;
@@ -1796,23 +1803,23 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void identify(final String distinctId) {
         try {
-            assertDistinctId( distinctId );
+            assertDistinctId(distinctId);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
             return;
         }
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     synchronized (mDistinctId) {
-                        mDistinctId.commit( distinctId );
+                        mDistinctId.commit(distinctId);
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -1821,12 +1828,12 @@ public class BetaDataAPI implements IBetaDataAPI {
      * @param loginId 当前用户的 loginId，不能为空，且长度不能大于255
      */
     public void setLoginId(final String loginId) {
-        if (loginId == null || "".equals( loginId )) {
+        if (loginId == null || "".equals(loginId)) {
             return;
         }
         synchronized (mPersistentLoginId) {
-            if (!loginId.equals( mPersistentLoginId.get() )) {
-                mPersistentLoginId.commit( loginId );
+            if (!loginId.equals(mPersistentLoginId.get())) {
+                mPersistentLoginId.commit(loginId);
             }
 
         }
@@ -1839,7 +1846,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void login(final String loginId) {
-        login( loginId, null );
+        login(loginId, null);
     }
 
     /**
@@ -1851,33 +1858,33 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void login(final String loginId, final JSONObject properties) {
         try {
-            assertDistinctId( loginId );
+            assertDistinctId(loginId);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
             return;
         }
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     synchronized (mPersistentLoginId) {
                         String id = mPersistentLoginId.get();
-                        if (!loginId.equals( mPersistentLoginId.get() )) {
-                            mPersistentLoginId.commit( loginId );
+                        if (!loginId.equals(mPersistentLoginId.get())) {
+                            mPersistentLoginId.commit(loginId);
                             long eventTime = System.currentTimeMillis();
                             JSONObject userProperties = new JSONObject();
                             JSONObject eventProperties = new JSONObject();
 
-                            userProperties.put( AopConstants.BETA_LAST_TIME, eventTime );// 上次登录时间
-                            trackEvent( EventType.TRACK_SIGNUP, AopConstants.BETA_APP_LOGIN, eventProperties, userProperties, loginId );
+                            userProperties.put(AopConstants.BETA_LAST_TIME, eventTime);// 上次登录时间
+                            trackEvent(EventType.TRACK_SIGNUP, AopConstants.BETA_APP_LOGIN, eventProperties, userProperties, loginId);
                         }
 
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -1885,19 +1892,19 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void logout() {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     flush();
                     synchronized (mPersistentLoginId) {
-                        mPersistentLoginId.commit( null );
+                        mPersistentLoginId.commit(null);
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -1914,22 +1921,22 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Deprecated
     @Override
     public void trackSignUp(final String newDistinctId, final JSONObject properties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     String originalDistinctId = getDistinctId();
 
                     synchronized (mDistinctId) {
-                        mDistinctId.commit( newDistinctId );
+                        mDistinctId.commit(newDistinctId);
                     }
 
-                    trackEvent( EventType.TRACK_SIGNUP, AopConstants.BETA_SIGN_UP, properties, null, originalDistinctId );
+                    trackEvent(EventType.TRACK_SIGNUP, AopConstants.BETA_SIGN_UP, properties, null, originalDistinctId);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -1945,21 +1952,21 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Deprecated
     @Override
     public void trackSignUp(final String newDistinctId) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     String originalDistinctId = getDistinctId();
                     synchronized (mDistinctId) {
-                        mDistinctId.commit( newDistinctId );
+                        mDistinctId.commit(newDistinctId);
                     }
 
-                    trackEvent( EventType.TRACK_SIGNUP, AopConstants.BETA_SIGN_UP, null, null, originalDistinctId );
+                    trackEvent(EventType.TRACK_SIGNUP, AopConstants.BETA_SIGN_UP, null, null, originalDistinctId);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2102,21 +2109,21 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void track(final String eventName, final JSONObject properties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
 
 
-                    trackEvent( EventType.TRACK, eventName, properties, null, null );
+                    trackEvent(EventType.TRACK, eventName, properties, null, null);
 
                 } catch (Exception e) {
-                    Log.e("BT.SendMessage",e.getCause().getMessage());
-                    BetaDataLog.printStackTrace( e );
+                    Log.e("BT.SendMessage", e.getCause().getMessage());
+                    BetaDataLog.printStackTrace(e);
                 }
 
             }
-        } );
+        });
     }
 
     /**
@@ -2126,16 +2133,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      * @param properties 事件的属性
      */
     public void track_user_info(final String eventName, final JSONObject properties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.TRACK_USER_INFO, eventName, properties, null, null );
+                    trackEvent(EventType.TRACK_USER_INFO, eventName, properties, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2145,16 +2152,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void track(final String eventName) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.TRACK, eventName, null, null, null );
+                    trackEvent(EventType.TRACK, eventName, null, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2167,7 +2174,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Deprecated
     @Override
     public void trackTimer(final String eventName) {
-        trackTimer( eventName, TimeUnit.MILLISECONDS );
+        trackTimer(eventName, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -2187,7 +2194,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     public void trackTimer(final String eventName, final TimeUnit timeUnit) {
         final long startTime = SystemClock.elapsedRealtime();
 
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -2196,10 +2203,10 @@ public class BetaDataAPI implements IBetaDataAPI {
                         mTrackTimer.put(eventName, new EventTimer(timeUnit, startTime));
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
 
@@ -2217,19 +2224,19 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void trackTimer(final String eventName, final EventTimer eventTimer) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
 //                    assertKey( eventName );
                     synchronized (mTrackTimer) {
-                        mTrackTimer.put( eventName, eventTimer );
+                        mTrackTimer.put(eventName, eventTimer);
                     }
                 } catch (Exception ex) {
-                    BetaDataLog.printStackTrace( ex );
+                    BetaDataLog.printStackTrace(ex);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2239,19 +2246,19 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void removeTimer(final String eventName) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
 //                    assertKey( eventName );
                     synchronized (mTrackTimer) {
-                        mTrackTimer.remove( eventName );
+                        mTrackTimer.remove(eventName);
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
 
@@ -2262,7 +2269,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void trackTimerStart(String eventName) {
-        trackTimerBegin( eventName, TimeUnit.MILLISECONDS );
+        trackTimerBegin(eventName, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -2275,7 +2282,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     @Deprecated
     public void trackTimerBegin(final String eventName) {
-        trackTimer( eventName );
+        trackTimer(eventName);
     }
 
     /**
@@ -2293,7 +2300,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     @Deprecated
     public void trackTimerBegin(final String eventName, final TimeUnit timeUnit) {
-        trackTimer( eventName, timeUnit );
+        trackTimer(eventName, timeUnit);
     }
 
     /**
@@ -2313,16 +2320,16 @@ public class BetaDataAPI implements IBetaDataAPI {
                 }
             }
         }
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.TRACK, eventName, properties, null, null );
+                    trackEvent(EventType.TRACK, eventName, properties, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2341,16 +2348,16 @@ public class BetaDataAPI implements IBetaDataAPI {
                 }
             }
         }
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.TRACK, eventName, null, null, null );
+                    trackEvent(EventType.TRACK, eventName, null, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2358,7 +2365,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void clearTrackTimer() {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -2366,10 +2373,10 @@ public class BetaDataAPI implements IBetaDataAPI {
                         mTrackTimer.clear();
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2421,30 +2428,30 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void trackViewScreen(final String url, final JSONObject properties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (!TextUtils.isEmpty( url ) || properties != null) {
+                    if (!TextUtils.isEmpty(url) || properties != null) {
                         JSONObject trackProperties = new JSONObject();
                         mLastScreenTrackProperties = properties;
 
-                        if (!TextUtils.isEmpty( mLastScreenUrl )) {
-                            trackProperties.put( AopConstants.BETA_SCREEN_NAME, mLastScreenUrl );
+                        if (!TextUtils.isEmpty(mLastScreenUrl)) {
+                            trackProperties.put(AopConstants.BETA_SCREEN_NAME, mLastScreenUrl);
                         }
 
-                        trackProperties.put( AopConstants.BETA_URL, url );
+                        trackProperties.put(AopConstants.BETA_URL, url);
                         mLastScreenUrl = url;
                         if (properties != null) {
-                            BetaDataUtils.mergeJSONObject( properties, trackProperties );
+                            BetaDataUtils.mergeJSONObject(properties, trackProperties);
                         }
-                        track( AopConstants.BETA_APP_PAGEVIEW, trackProperties );
+                        track(AopConstants.BETA_APP_PAGEVIEW, trackProperties);
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2454,7 +2461,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void trackViewScreen(final Activity activity) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -2463,8 +2470,8 @@ public class BetaDataAPI implements IBetaDataAPI {
                     }
 
                     JSONObject properties = new JSONObject();
-                    properties.put( AopConstants.BETA_SCREEN_NAME, activity.getClass().getSimpleName() );
-                    BetaDataUtils.getScreenNameAndTitleFromActivity( properties, activity );
+                    properties.put(AopConstants.BETA_SCREEN_NAME, activity.getClass().getSimpleName());
+                    BetaDataUtils.getScreenNameAndTitleFromActivity(properties, activity);
 
                     if (activity instanceof ScreenAutoTracker) {
                         ScreenAutoTracker screenAutoTracker = (ScreenAutoTracker) activity;
@@ -2472,18 +2479,18 @@ public class BetaDataAPI implements IBetaDataAPI {
                         String screenUrl = screenAutoTracker.getScreenUrl();
                         JSONObject otherProperties = screenAutoTracker.getTrackProperties();
                         if (otherProperties != null) {
-                            BetaDataUtils.mergeJSONObject( otherProperties, properties );
+                            BetaDataUtils.mergeJSONObject(otherProperties, properties);
                         }
 
-                        trackViewScreen( screenUrl, properties );
+                        trackViewScreen(screenUrl, properties);
                     } else {
-                        track( "_app_pageview", properties );
+                        track("_app_pageview", properties);
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     @Override
@@ -2498,19 +2505,19 @@ public class BetaDataAPI implements IBetaDataAPI {
 
         try {
             try {
-                supportFragmentClass = Class.forName( "android.support.v4.app.Fragment" );
+                supportFragmentClass = Class.forName("android.support.v4.app.Fragment");
             } catch (Exception e) {
                 //ignored
             }
 
             try {
-                appFragmentClass = Class.forName( "android.app.Fragment" );
+                appFragmentClass = Class.forName("android.app.Fragment");
             } catch (Exception e) {
                 //ignored
             }
 
             try {
-                androidXFragmentClass = Class.forName( "androidx.fragment.app.Fragment" );
+                androidXFragmentClass = Class.forName("androidx.fragment.app.Fragment");
             } catch (Exception e) {
                 //ignored
             }
@@ -2518,13 +2525,13 @@ public class BetaDataAPI implements IBetaDataAPI {
             //ignored
         }
 
-        if (!(supportFragmentClass != null && supportFragmentClass.isInstance( fragment )) &&
-                !(appFragmentClass != null && appFragmentClass.isInstance( fragment )) &&
-                !(androidXFragmentClass != null && androidXFragmentClass.isInstance( fragment ))) {
+        if (!(supportFragmentClass != null && supportFragmentClass.isInstance(fragment)) &&
+                !(appFragmentClass != null && appFragmentClass.isInstance(fragment)) &&
+                !(androidXFragmentClass != null && androidXFragmentClass.isInstance(fragment))) {
             return;
         }
 
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -2533,8 +2540,8 @@ public class BetaDataAPI implements IBetaDataAPI {
 
                     String title = null;
 
-                    if (fragment.getClass().isAnnotationPresent( BetaDataFragmentTitle.class )) {
-                        BetaDataFragmentTitle betaDataFragmentTitle = fragment.getClass().getAnnotation( BetaDataFragmentTitle.class );
+                    if (fragment.getClass().isAnnotationPresent(BetaDataFragmentTitle.class)) {
+                        BetaDataFragmentTitle betaDataFragmentTitle = fragment.getClass().getAnnotation(BetaDataFragmentTitle.class);
                         if (betaDataFragmentTitle != null) {
                             title = betaDataFragmentTitle.title();
                         }
@@ -2543,33 +2550,33 @@ public class BetaDataAPI implements IBetaDataAPI {
                     if (Build.VERSION.SDK_INT >= 11) {
                         Activity activity = null;
                         try {
-                            Method getActivityMethod = fragment.getClass().getMethod( "getActivity" );
+                            Method getActivityMethod = fragment.getClass().getMethod("getActivity");
                             if (getActivityMethod != null) {
-                                activity = (Activity) getActivityMethod.invoke( fragment );
+                                activity = (Activity) getActivityMethod.invoke(fragment);
                             }
                         } catch (Exception e) {
                             //ignored
                         }
                         if (activity != null) {
-                            if (TextUtils.isEmpty( title )) {
-                                title = BetaDataUtils.getActivityTitle( activity );
+                            if (TextUtils.isEmpty(title)) {
+                                title = BetaDataUtils.getActivityTitle(activity);
 
                             }
-                            screenName = String.format( Locale.CHINA, "%s|%s", activity.getClass().getCanonicalName(), screenName );
+                            screenName = String.format(Locale.CHINA, "%s|%s", activity.getClass().getCanonicalName(), screenName);
                         }
                     }
 
-                    if (!TextUtils.isEmpty( title )) {
-                        properties.put( AopConstants.BETA_TITLE, title );
+                    if (!TextUtils.isEmpty(title)) {
+                        properties.put(AopConstants.BETA_TITLE, title);
                     }
 
-                    properties.put( AopConstants.BETA_SCREEN_NAME, screenName );
-                    track( AopConstants.BETA_APP_PAGEVIEW, properties );
+                    properties.put(AopConstants.BETA_SCREEN_NAME, screenName);
+                    track(AopConstants.BETA_APP_PAGEVIEW, properties);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2584,19 +2591,19 @@ public class BetaDataAPI implements IBetaDataAPI {
                 while (iter.hasNext()) {
                     Map.Entry entry = (Map.Entry) iter.next();
                     if (entry != null) {
-                        if (AopConstants.BETA_APP_END.equals( entry.getKey().toString() )) {
+                        if (AopConstants.BETA_APP_END.equals(entry.getKey().toString())) {
                             continue;
                         }
                         EventTimer eventTimer = (EventTimer) entry.getValue();
                         if (eventTimer != null) {
                             long eventAccumulatedDuration = eventTimer.getEventAccumulatedDuration() + SystemClock.elapsedRealtime() - eventTimer.getStartTime();
-                            eventTimer.setEventAccumulatedDuration( eventAccumulatedDuration );
-                            eventTimer.setStartTime( SystemClock.elapsedRealtime() );
+                            eventTimer.setEventAccumulatedDuration(eventAccumulatedDuration);
+                            eventTimer.setStartTime(SystemClock.elapsedRealtime());
                         }
                     }
                 }
             } catch (Exception e) {
-                BetaDataLog.i( BetaDataConstant.BT_TAG, "appEnterBackground error:" + e.getMessage() );
+                BetaDataLog.i(BetaDataConstant.BT_TAG, "appEnterBackground error:" + e.getMessage());
             }
         }
     }
@@ -2616,12 +2623,12 @@ public class BetaDataAPI implements IBetaDataAPI {
                     if (entry != null) {
                         EventTimer eventTimer = (EventTimer) entry.getValue();
                         if (eventTimer != null) {
-                            eventTimer.setStartTime( SystemClock.elapsedRealtime() );
+                            eventTimer.setStartTime(SystemClock.elapsedRealtime());
                         }
                     }
                 }
             } catch (Exception e) {
-                BetaDataLog.i( BetaDataConstant.BT_TAG, "appBecomeActive error:" + e.getMessage() );
+                BetaDataLog.i(BetaDataConstant.BT_TAG, "appBecomeActive error:" + e.getMessage());
             }
         }
     }
@@ -2640,7 +2647,7 @@ public class BetaDataAPI implements IBetaDataAPI {
      * @param timeDelayMills 延迟毫秒数
      */
     public void flush(long timeDelayMills) {
-        mMessages.flush( timeDelayMills );
+        mMessages.flush(timeDelayMills);
     }
 
     /**
@@ -2655,12 +2662,12 @@ public class BetaDataAPI implements IBetaDataAPI {
      * 以阻塞形式入库数据
      */
     void flushDataSync() {
-        mTrackTaskManager.addEventDBTask( new Runnable() {
+        mTrackTaskManager.addEventDBTask(new Runnable() {
             @Override
             public void run() {
                 mMessages.flushDataSync();
             }
-        } );
+        });
     }
 
     /**
@@ -2714,14 +2721,14 @@ public class BetaDataAPI implements IBetaDataAPI {
             if (superProperties == null) {
                 return;
             }
-            assertPropertyTypes( superProperties );
+            assertPropertyTypes(superProperties);
             synchronized (mSuperProperties) {
                 JSONObject properties = mSuperProperties.get();
-                BetaDataUtils.mergeSuperJSONObject( superProperties, properties );
-                mSuperProperties.commit( properties );
+                BetaDataUtils.mergeSuperJSONObject(superProperties, properties);
+                mSuperProperties.commit(properties);
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -2735,11 +2742,11 @@ public class BetaDataAPI implements IBetaDataAPI {
         try {
             synchronized (mSuperProperties) {
                 JSONObject superProperties = mSuperProperties.get();
-                superProperties.remove( superPropertyName );
-                mSuperProperties.commit( superProperties );
+                superProperties.remove(superPropertyName);
+                mSuperProperties.commit(superProperties);
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
@@ -2749,7 +2756,7 @@ public class BetaDataAPI implements IBetaDataAPI {
     @Override
     public void clearSuperProperties() {
         synchronized (mSuperProperties) {
-            mSuperProperties.commit( new JSONObject() );
+            mSuperProperties.commit(new JSONObject());
         }
     }
 
@@ -2760,27 +2767,27 @@ public class BetaDataAPI implements IBetaDataAPI {
     public void signupSet(final String loginId, final JSONObject eventProperties, final JSONObject userProperties) {
         // 初始化登录
         try {
-            assertDistinctId( loginId );
+            assertDistinctId(loginId);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
             return;
         }
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     synchronized (mPersistentLoginId) {
                         String id = mPersistentLoginId.get();
-                        if (!loginId.equals( mPersistentLoginId.get() )) {
-                            mPersistentLoginId.commit( loginId );
+                        if (!loginId.equals(mPersistentLoginId.get())) {
+                            mPersistentLoginId.commit(loginId);
                         }
-                        trackEvent( EventType.TRACK_SIGNUP, AopConstants.BETA_APP_REGISTER, eventProperties, userProperties, null );
+                        trackEvent(EventType.TRACK_SIGNUP, AopConstants.BETA_APP_REGISTER, eventProperties, userProperties, null);
                     }
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     @Override
@@ -2796,16 +2803,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileSet(final JSONObject properties, final JSONObject userProperties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_SET, AopConstants.BETA_APP_PROFILE, properties, userProperties, null );
+                    trackEvent(EventType.PROFILE_SET, AopConstants.BETA_APP_PROFILE, properties, userProperties, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2817,16 +2824,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileSet(final String property, final Object value) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_SET, null, new JSONObject().put( property, value ), null, null );
+                    trackEvent(EventType.PROFILE_SET, null, new JSONObject().put(property, value), null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2837,16 +2844,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileSetOnce(final JSONObject properties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_SET_ONCE, null, properties, null, null );
+                    trackEvent(EventType.PROFILE_SET_ONCE, null, properties, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2859,16 +2866,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileSetOnce(final String property, final Object value) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_SET_ONCE, null, new JSONObject().put( property, value ), null, null );
+                    trackEvent(EventType.PROFILE_SET_ONCE, null, new JSONObject().put(property, value), null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2879,16 +2886,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileIncrement(final Map<String, ? extends Number> properties) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_INCREMENT, null, new JSONObject( properties ), null, null );
+                    trackEvent(EventType.PROFILE_INCREMENT, null, new JSONObject(properties), null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2900,16 +2907,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileIncrement(final String property, final Number value) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_INCREMENT, null, new JSONObject().put( property, value ), null, null );
+                    trackEvent(EventType.PROFILE_INCREMENT, null, new JSONObject().put(property, value), null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2920,20 +2927,20 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileAppend(final String property, final String value) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     final JSONArray append_values = new JSONArray();
-                    append_values.put( value );
+                    append_values.put(value);
                     final JSONObject properties = new JSONObject();
-                    properties.put( property, append_values );
-                    trackEvent( EventType.PROFILE_APPEND, null, properties, null, null );
+                    properties.put(property, append_values);
+                    trackEvent(EventType.PROFILE_APPEND, null, properties, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2944,22 +2951,22 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileAppend(final String property, final Set<String> values) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
                     final JSONArray append_values = new JSONArray();
                     for (String value : values) {
-                        append_values.put( value );
+                        append_values.put(value);
                     }
                     final JSONObject properties = new JSONObject();
-                    properties.put( property, append_values );
-                    trackEvent( EventType.PROFILE_APPEND, null, properties, null, null );
+                    properties.put(property, append_values);
+                    trackEvent(EventType.PROFILE_APPEND, null, properties, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2969,16 +2976,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileUnset(final String property) {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_UNSET, null, new JSONObject().put( property, true ), null, null );
+                    trackEvent(EventType.PROFILE_UNSET, null, new JSONObject().put(property, true), null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -2986,16 +2993,16 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     @Override
     public void profileDelete() {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
                 try {
-                    trackEvent( EventType.PROFILE_DELETE, null, null, null, null );
+                    trackEvent(EventType.PROFILE_DELETE, null, null, null, null);
                 } catch (Exception e) {
-                    BetaDataLog.printStackTrace( e );
+                    BetaDataLog.printStackTrace(e);
                 }
             }
-        } );
+        });
     }
 
     @Override
@@ -3210,24 +3217,24 @@ public class BetaDataAPI implements IBetaDataAPI {
     private boolean isEnterDb(String eventName, JSONObject eventProperties) {
         boolean enterDb = true;
         if (mTrackEventCallBack != null) {
-            BetaDataLog.d( BetaDataConstant.BT_TAG, "SDK have set trackEvent callBack" );
+            BetaDataLog.d(BetaDataConstant.BT_TAG, "SDK have set trackEvent callBack");
             try {
                 JSONObject properties = new JSONObject();
                 Iterator<String> iterator = eventProperties.keys();
                 ArrayList<String> keys = new ArrayList<>();
                 while (iterator.hasNext()) {
                     String key = iterator.next();
-                    if (key.startsWith( "_" ) && !TextUtils.equals( key, AopConstants.BETA_DEVICE_ID )) {
+                    if (key.startsWith("_") && !TextUtils.equals(key, AopConstants.BETA_DEVICE_ID)) {
                         continue;
                     }
-                    Object value = eventProperties.opt( key );
-                    properties.put( key, value );
-                    keys.add( key );
+                    Object value = eventProperties.opt(key);
+                    properties.put(key, value);
+                    keys.add(key);
                 }
-                enterDb = mTrackEventCallBack.onTrackEvent( eventName, properties );
+                enterDb = mTrackEventCallBack.onTrackEvent(eventName, properties);
                 if (enterDb) {
                     for (String key : keys) {
-                        eventProperties.remove( key );
+                        eventProperties.remove(key);
                     }
                     Iterator<String> it = properties.keys();
                     while (it.hasNext()) {
@@ -3238,34 +3245,34 @@ public class BetaDataAPI implements IBetaDataAPI {
 //                            BetaDataLog.printStackTrace( e );
 //                            return false;
 //                        }
-                        Object value = properties.opt( key );
+                        Object value = properties.opt(key);
                         if (!(value instanceof String || value instanceof Number || value
                                 instanceof JSONArray || value instanceof Boolean || value instanceof Date)) {
-                            BetaDataLog.d( BetaDataConstant.BT_TAG, "The property value must be an instance of "
+                            BetaDataLog.d(BetaDataConstant.BT_TAG, "The property value must be an instance of "
                                     + "String/Number/Boolean/JSONArray. [key='" + key + "', value='" + value.toString()
-                                    + "']" );
+                                    + "']");
                             return false;
                         }
 
-                        if (AopConstants.BETA_CRASH_REASON.equals( key )) {
+                        if (AopConstants.BETA_CRASH_REASON.equals(key)) {
                             if (value instanceof String && ((String) value).length() > 8191 * 2) {
-                                BetaDataLog.d( BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
-                                        + "', value='" + value.toString() + "']" );
-                                value = ((String) value).substring( 0, 8191 * 2 ) + "$";
+                                BetaDataLog.d(BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
+                                        + "', value='" + value.toString() + "']");
+                                value = ((String) value).substring(0, 8191 * 2) + "$";
                             }
                         } else {
                             if (value instanceof String && ((String) value).length() > 8191) {
-                                BetaDataLog.d( BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
-                                        + "', value='" + value.toString() + "']" );
-                                value = ((String) value).substring( 0, 8191 ) + "$";
+                                BetaDataLog.d(BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
+                                        + "', value='" + value.toString() + "']");
+                                value = ((String) value).substring(0, 8191) + "$";
                             }
                         }
-                        eventProperties.put( key, value );
+                        eventProperties.put(key, value);
                     }
                 }
 
             } catch (Exception e) {
-                BetaDataLog.printStackTrace( e );
+                BetaDataLog.printStackTrace(e);
             }
         }
         return enterDb;
@@ -3279,34 +3286,34 @@ public class BetaDataAPI implements IBetaDataAPI {
      */
     private void init_carrier(JSONObject sendProperties) {
         try {
-            if (TextUtils.isEmpty( sendProperties.optString( "_carrier" ) )) {
-                String carrier = BetaDataUtils.getCarrier( mContext );
-                if (!TextUtils.isEmpty( carrier )) {
-                    sendProperties.put( "_carrier", carrier );
+            if (TextUtils.isEmpty(sendProperties.optString("_carrier"))) {
+                String carrier = BetaDataUtils.getCarrier(mContext);
+                if (!TextUtils.isEmpty(carrier)) {
+                    sendProperties.put("_carrier", carrier);
                 }
             }
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
     }
 
 
     public void stopTrackTaskThread() {
-        mTrackTaskManager.addTrackEventTask( new Runnable() {
+        mTrackTaskManager.addTrackEventTask(new Runnable() {
             @Override
             public void run() {
-                mTrackTaskManagerThread.setStop( true );
-                mTrackDBTaskManagerThread.setStop( true );
+                mTrackTaskManagerThread.setStop(true);
+                mTrackDBTaskManagerThread.setStop(true);
             }
-        } );
+        });
     }
 
     public void resumeTrackTaskThread() {
         mTrackTaskManagerThread = new TrackTaskManagerThread();
         mTrackDBTaskManagerThread = new TrackDBTaskManagerThread();
         betaDataThreadPool = BetaDataThreadPool.getInstance();
-        betaDataThreadPool.execute( mTrackTaskManagerThread );
-        betaDataThreadPool.execute( mTrackDBTaskManagerThread );
+        betaDataThreadPool.execute(mTrackTaskManagerThread);
+        betaDataThreadPool.execute(mTrackDBTaskManagerThread);
     }
 
 
@@ -3320,30 +3327,30 @@ public class BetaDataAPI implements IBetaDataAPI {
             String key = (String) iterator.next();
 
             try {
-                Object value = properties.get( key );
+                Object value = properties.get(key);
 
                 if (!(value instanceof String || value instanceof Number || value
                         instanceof JSONArray || value instanceof Boolean || value instanceof Date)) {
-                    throw new InvalidDataException( "The property value must be an instance of "
+                    throw new InvalidDataException("The property value must be an instance of "
                             + "String/Number/Boolean/JSONArray. [key='" + key + "', value='" + value.toString()
-                            + "']" );
+                            + "']");
                 }
 
-                if (AopConstants.BETA_CRASH_REASON.equals( key )) {
+                if (AopConstants.BETA_CRASH_REASON.equals(key)) {
                     if (value instanceof String && ((String) value).length() > 8191 * 2) {
-                        properties.put( key, ((String) value).substring( 0, 8191 * 2 ) + "$" );
-                        BetaDataLog.d( BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
-                                + "', value='" + value.toString() + "']" );
+                        properties.put(key, ((String) value).substring(0, 8191 * 2) + "$");
+                        BetaDataLog.d(BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
+                                + "', value='" + value.toString() + "']");
                     }
                 } else {
                     if (value instanceof String && ((String) value).length() > 8191) {
-                        properties.put( key, ((String) value).substring( 0, 8191 ) + "$" );
-                        BetaDataLog.d( BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
-                                + "', value='" + value.toString() + "']" );
+                        properties.put(key, ((String) value).substring(0, 8191) + "$");
+                        BetaDataLog.d(BetaDataConstant.BT_TAG, "The property value is too long. [key='" + key
+                                + "', value='" + value.toString() + "']");
                     }
                 }
             } catch (JSONException e) {
-                throw new InvalidDataException( "Unexpected property key. [key='" + key + "']" );
+                throw new InvalidDataException("Unexpected property key. [key='" + key + "']");
             }
         }
     }
@@ -3351,10 +3358,10 @@ public class BetaDataAPI implements IBetaDataAPI {
 
     private void assertDistinctId(String key) throws InvalidDataException {
         if (key == null || key.length() < 1) {
-            throw new InvalidDataException( "The distinct_id or original_id or login_id is empty." );
+            throw new InvalidDataException("The distinct_id or original_id or login_id is empty.");
         }
         if (key.length() > 255) {
-            throw new InvalidDataException( "The max length of distinct_id or original_id or login_id is 255." );
+            throw new InvalidDataException("The max length of distinct_id or original_id or login_id is 255.");
         }
     }
 
@@ -3371,12 +3378,12 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
         try {
             if (mIsFirstDayDateFormat == null) {
-                mIsFirstDayDateFormat = new SimpleDateFormat( "yyyy-MM-dd", Locale.getDefault() );
+                mIsFirstDayDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             }
-            String current = mIsFirstDayDateFormat.format( System.currentTimeMillis() );
-            return firstDay.equals( current );
+            String current = mIsFirstDayDateFormat.format(System.currentTimeMillis());
+            return firstDay.equals(current);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
         return true;
     }
@@ -3388,34 +3395,31 @@ public class BetaDataAPI implements IBetaDataAPI {
         }
         try {
             if (mIsFirstDayDateFormat == null) {
-                mIsFirstDayDateFormat = new SimpleDateFormat( "yyyy-MM-dd", Locale.getDefault() );
+                mIsFirstDayDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             }
-            String current = mIsFirstDayDateFormat.format( eventTime );
-            return firstDay.equals( current );
+            String current = mIsFirstDayDateFormat.format(eventTime);
+            return firstDay.equals(current);
         } catch (Exception e) {
-            BetaDataLog.printStackTrace( e );
+            BetaDataLog.printStackTrace(e);
         }
         return true;
     }
-
 
 
     /**
      * 设置手机唯一标识 imei
      */
     public void setPhoneImei(String imei) {
-       if(imei!=null)
-       {
-           BetaPhoneInfoManager.getInstance().setImei(imei);
-       }
+        if (imei != null) {
+            BetaPhoneInfoManager.getInstance().setImei(imei);
+        }
     }
 
     /**
      * 设置手机唯一标识 oaid
      */
     public void setPhoneOaid(String oaid) {
-        if(oaid!=null)
-        {
+        if (oaid != null) {
             BetaPhoneInfoManager.getInstance().setOaid(oaid);
         }
     }

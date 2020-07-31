@@ -4,7 +4,6 @@ package com.betadata.collect.data.persistent;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-
 import com.betadata.collect.util.BetaDataUtils;
 
 import java.util.UUID;

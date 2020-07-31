@@ -16,6 +16,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 
 import com.betadata.collect.common.AopConstants;
+import com.betadata.collect.common.SpConstant;
 import com.betadata.collect.data.DbAdapter;
 import com.betadata.collect.data.DbParams;
 import com.betadata.collect.data.persistent.PersistentFirstDay;
@@ -23,6 +24,7 @@ import com.betadata.collect.data.persistent.PersistentFirstStart;
 import com.betadata.collect.util.AopUtil;
 import com.betadata.collect.util.BetaDataTimer;
 import com.betadata.collect.util.BetaDataUtils;
+import com.betadata.collect.util.BetaSpUtils;
 
 import org.json.JSONObject;
 
@@ -131,6 +133,8 @@ class BetaDataActivityLifecycleCallbacks implements Application.ActivityLifecycl
                         JSONObject properties = new JSONObject();
                         // 判断第一次安装
                         if (firstStart) {
+                            long mCurrenTime= BetaDataUtils.getCurrenTimestampMillis(mContext);
+                            BetaSpUtils.save(mContext, SpConstant.INSTALL_TIME,mCurrenTime);
                             // 发送安装事件
                             mBetaDataInstance.track( AopConstants.BETA_APP_INSTALL, properties );
                         }
@@ -205,7 +209,7 @@ class BetaDataActivityLifecycleCallbacks implements Application.ActivityLifecycl
              * 处理app崩溃 添加append时间
              */
             if (isAutoTrackEnabled && !mBetaDataInstance.isAutoTrackEventTypeIgnored( BetaDataAPI.AutoTrackEventType.APP_END )) {
-                BetaDataTimer.getInstance().timer( new Runnable() {
+                BetaDataTimer.getInstance().timer(new Runnable() {
                     @Override
                     public void run() {
                         commitAppEndData();
@@ -277,8 +281,7 @@ class BetaDataActivityLifecycleCallbacks implements Application.ActivityLifecycl
                         if (endDataJsonObject.has( EVENT_TIMER )) {
                             long startTime = mDbAdapter.getAppStartTime();
                             long endTime = endDataJsonObject.getLong( EVENT_TIMER );
-                           EventTimer eventTimer = new EventTimer( TimeUnit.MILLISECONDS, startTime, endTime );
-                            BetaDataLog.d( TAG, "startTime:" + startTime + "--endTime:" + endTime + "--event_duration:" + eventTimer.duration() );
+                            EventTimer eventTimer = new EventTimer( TimeUnit.MILLISECONDS, startTime, endTime );
                             // 存储AppEnd的时间
                             mBetaDataInstance.trackTimer( AopConstants.BETA_APP_END, eventTimer );
                             // 清除onPause存储的时间
@@ -291,6 +294,7 @@ class BetaDataActivityLifecycleCallbacks implements Application.ActivityLifecycl
                     }
                     // 清除页面的url
                     mBetaDataInstance.clearLastScreenUrl();
+
                     // 发送AppEnd
                     mBetaDataInstance.track( AopConstants.BETA_APP_END, properties );
                 }

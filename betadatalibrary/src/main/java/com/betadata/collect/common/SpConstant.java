@@ -9,5 +9,6 @@ package com.betadata.collect.common;
  */
 public class SpConstant {
     public static final String TIME_DIFFERENCE = "time_difference";// 本地和服务端时间差
+    public static final String INSTALL_TIME = "install_time";// 获取当前安装时间
 
 }

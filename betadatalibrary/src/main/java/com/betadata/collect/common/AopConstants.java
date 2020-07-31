@@ -15,8 +15,8 @@ public class AopConstants {
 
 
     //------------------------------事件类型  start----------------------------------------------
-    public static final String BETA_USERS_PROPERTIES = "user_properties";// 基础事件
-    public static final String BETA_EVENTS_PROPERTIES = "event_properties";// 用户事件
+    public static final String BETA_USERS_PROPERTIES = "user_properties";// 用户事件
+    public static final String BETA_EVENTS_PROPERTIES = "event_properties";// 基础事件
     //------------------------------事件类型  end------------------------------------------------
 
 
@@ -52,6 +52,7 @@ public class AopConstants {
     public static final String BETA_EVENT_DURATION = "_event_duration";// 统计时长
     public static final String BETA_LAST_TIME = "_last_time";// 上次登录时间
     public static final String BETA_IS_FIRST = "_is_first";// 是否第一次注册
+    public static final String BETA_IS_FIRST_DAY="_is_first_day";// 是否是用户第一天安装
     public static final String BETA_IMEI = "imei";// 获取手机imei
     public static final String BETA_OAID = "oaid";// 获取手机oaid
     public static final String BETA_ANDROID_ID = "android_id";// 获取手机Androidid

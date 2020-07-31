@@ -20,14 +20,13 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-
-import com.betadata.collect.common.AopConstants;
-import com.betadata.collect.BetaDataLog;
 import com.betadata.collect.BetaDataAPI;
+import com.betadata.collect.BetaDataFragmentTitle;
+import com.betadata.collect.BetaDataLog;
 import com.betadata.collect.Pathfinder;
 import com.betadata.collect.R;
 import com.betadata.collect.ScreenAutoTracker;
-import com.betadata.collect.BetaDataFragmentTitle;
+import com.betadata.collect.common.AopConstants;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

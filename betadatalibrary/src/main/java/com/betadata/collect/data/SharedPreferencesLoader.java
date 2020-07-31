@@ -4,7 +4,6 @@ package com.betadata.collect.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-
 import com.betadata.collect.BetaDataThreadPool;
 
 import java.util.concurrent.Callable;

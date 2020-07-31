@@ -10,7 +10,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.inputmethod.InputMethodManager;
 
 import com.betadata.collect.bean.SendReturnMessageBean;
 import com.betadata.collect.common.AopConstants;
@@ -18,7 +17,6 @@ import com.betadata.collect.common.BetaDataConstant;
 import com.betadata.collect.data.DbAdapter;
 import com.betadata.collect.data.DbParams;
 import com.betadata.collect.exceptions.ConnectErrorException;
-import com.betadata.collect.exceptions.DebugModeException;
 import com.betadata.collect.exceptions.InvalidDataException;
 import com.betadata.collect.exceptions.ResponseErrorException;
 import com.betadata.collect.util.Base64Coder;
@@ -42,8 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.GZIPOutputStream;
 

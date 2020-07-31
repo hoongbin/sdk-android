@@ -31,17 +31,15 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-
-import com.betadata.collect.common.AopConstants;
-
-import com.betadata.collect.BetaDataLog;
-import com.betadata.collect.BetaDataAPI;
-import com.betadata.collect.R;
-import com.betadata.collect.ScreenAutoTracker;
 import com.betadata.collect.BetaAdapterViewItemTrackProperties;
+import com.betadata.collect.BetaDataAPI;
 import com.betadata.collect.BetaDataAutoTrackAppViewScreenUrl;
 import com.betadata.collect.BetaDataIgnoreTrackAppViewScreen;
+import com.betadata.collect.BetaDataLog;
 import com.betadata.collect.BetaExpandableListViewItemTrackProperties;
+import com.betadata.collect.R;
+import com.betadata.collect.ScreenAutoTracker;
+import com.betadata.collect.common.AopConstants;
 import com.betadata.collect.util.AopUtil;
 import com.betadata.collect.util.BetaDataUtils;
 

@@ -8,9 +8,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.text.TextUtils;
 
-
-import com.betadata.collect.BetaDataLog;
 import com.betadata.collect.BetaDataAPI;
+import com.betadata.collect.BetaDataLog;
 import com.betadata.collect.common.BetaDataConfig;
 
 import org.json.JSONObject;
