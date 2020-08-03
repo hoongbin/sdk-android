@@ -1,6 +1,8 @@
 
 package com.betadata.collect.common;
 
+import com.betadata.collect.BuildConfig;
+
 public class AopConstants {
 
 
@@ -8,7 +10,7 @@ public class AopConstants {
     public static String App_Secret = "";// app secret
 
 
-    public static final String BETADATA_SDK_VERSION = "1.2.7";
+    public static final String BETADATA_SDK_VERSION = BuildConfig.VERSION_NAME;
     public static final String ELEMENT_TYPE = "_element_selector";
     public static final String ELEMENT_CONTENT = "_element_content";
     public static final String BETA_TITLE = "_title";
